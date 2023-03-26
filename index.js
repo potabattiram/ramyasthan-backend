@@ -138,26 +138,30 @@ app.get('/list-collections',async (req,res) => {
   }
 });
 
-app.get('/global-api', async (req, res) => {
+
+app.get('/global-api/:source', async (req, res) => {
   try {
     const visitorIp = req.ip;
-    const collection = Connection.client.db('IskconSolapur').collection('visitorCount');
+    const collection = Connection.client.db('IskconSolapur').collection(`visitorCount`);
 
-    const visitor = await collection.findOne({ ip: visitorIp });
+    const visitor = await collection.findOne({ ip: visitorIp, source: req.params.source });
+
     if (visitor) {
       // If visitor exists, increment count
       visitor.count++;
       visitor.date = new Date();
-      await collection.updateOne({ _id: visitor._id }, { $set: visitor })
+      await collection.updateOne({ _id: visitor._id }, { $set: visitor });
     } else {
       // If visitor does not exist, create a new document with count = 1
-      const newVisitor = { ip: visitorIp, count: 1 };
+      const newVisitor = { ip: visitorIp, source: req.params.source, count: 1, date: new Date() };
       await collection.insertOne(newVisitor);
     }
 
     // Fetch all visitors for the given place
-    const data = await collection.find({}).toArray();
-    res.json(data);
+    res.json({
+      success: true,
+      status: 202
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error fetching data');
