@@ -75,7 +75,6 @@ app.get('/search/:keyword', async (req, res) => {
   }
 });
 
-
 app.get('/get-content/:keyword', async (req, res) => {
   try {
     let str =  req.params.keyword.replace(/-/g, ' ');
@@ -138,7 +137,6 @@ app.get('/list-collections',async (req,res) => {
     res.status(500).send('Error fetching collections');
   }
 });
-
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
