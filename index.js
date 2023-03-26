@@ -138,6 +138,33 @@ app.get('/list-collections',async (req,res) => {
   }
 });
 
+app.get('/global-api', async (req, res) => {
+  try {
+    const visitorIp = req.ip;
+    const collection = Connection.client.db('IskconSolapur').collection('visitorCount');
+
+    const visitor = await collection.findOne({ ip: visitorIp });
+    if (visitor) {
+      // If visitor exists, increment count
+      visitor.count++;
+      visitor.date = new Date();
+      await collection.updateOne({ _id: visitor._id }, { $set: visitor })
+    } else {
+      // If visitor does not exist, create a new document with count = 1
+      const newVisitor = { ip: visitorIp, count: 1 };
+      await collection.insertOne(newVisitor);
+    }
+
+    // Fetch all visitors for the given place
+    const data = await collection.find({}).toArray();
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error fetching data');
+  }
+});
+
+
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
