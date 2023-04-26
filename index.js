@@ -28,6 +28,7 @@ app.get('/search/:keyword', async (req, res) => {
   try {
     const collection1 = Connection.client.db('RamyaSthan').collection('govardhan');
     const collection2 = Connection.client.db('RamyaSthan').collection('vrindavan');
+    const collection3 = Connection.client.db('RamyaSthan').collection('other_places'); // add this line
     const regex = new RegExp(req.params.keyword, 'i');
 
     const pipeline = [
@@ -39,16 +40,25 @@ app.get('/search/:keyword', async (req, res) => {
       },
       {
         $unionWith: {
-          coll: 'vrindavan', // add documents from collection2 to the pipeline
+          coll: 'vrindavan', 
           pipeline: [
-            { $match: { name: regex } }, // match documents in collection2 with the keyword
-            { $project: { _id: 0 } } // exclude _id field from the result
+            { $match: { name: regex } }, 
+            { $project: { _id: 0 } } 
+          ]
+        }
+      },
+      {
+        $unionWith: { // add this stage
+          coll: 'other_places',
+          pipeline: [
+            { $match: { name: regex } },
+            { $project: { _id: 0 } }
           ]
         }
       },
       {
         $lookup: {
-          from: 'vrindavan', // join collection2 with collection1
+          from: 'vrindavan',
           localField: 'name',
           foreignField: 'name',
           as: 'joinedData'
@@ -56,16 +66,25 @@ app.get('/search/:keyword', async (req, res) => {
       },
       {
         $lookup: {
-          from: 'govardhan', // join collection1 with collection2
+          from: 'govardhan',
           localField: 'name',
           foreignField: 'name',
           as: 'joinedData'
         }
       },
       {
-        $project: { joinedData: 0 } // exclude the joinedData field from the result
+        $lookup: { // add this stage
+          from: 'other_places',
+          localField: 'name',
+          foreignField: 'name',
+          as: 'joinedData'
+        }
+      },
+      {
+        $project: { joinedData: 0 } 
       }
     ];
+
     const data = await collection1.aggregate(pipeline).toArray();
     res.json(data);
 
@@ -75,11 +94,13 @@ app.get('/search/:keyword', async (req, res) => {
   }
 });
 
+
 app.get('/get-content/:keyword', async (req, res) => {
   try {
     let str =  req.params.keyword.replace(/-/g, ' ');
     const collection1 = Connection.client.db('RamyaSthan').collection('govardhan');
     const collection2 = Connection.client.db('RamyaSthan').collection('vrindavan');
+    const collection3 = Connection.client.db('RamyaSthan').collection('other_places'); // add this line
     const regex = new RegExp(str, 'i');
 
     const pipeline = [
@@ -91,16 +112,25 @@ app.get('/get-content/:keyword', async (req, res) => {
       },
       {
         $unionWith: {
-          coll: 'vrindavan', // add documents from collection2 to the pipeline
+          coll: 'vrindavan', 
           pipeline: [
-            { $match: { name: regex } }, // match documents in collection2 with the keyword
-            { $project: { _id: 0 } } // exclude _id field from the result
+            { $match: { name: regex } }, 
+            { $project: { _id: 0 } } 
+          ]
+        }
+      },
+      {
+        $unionWith: { // add this stage
+          coll: 'other_places',
+          pipeline: [
+            { $match: { name: regex } },
+            { $project: { _id: 0 } }
           ]
         }
       },
       {
         $lookup: {
-          from: 'vrindavan', // join collection2 with collection1
+          from: 'vrindavan',
           localField: 'name',
           foreignField: 'name',
           as: 'joinedData'
@@ -108,16 +138,25 @@ app.get('/get-content/:keyword', async (req, res) => {
       },
       {
         $lookup: {
-          from: 'govardhan', // join collection1 with collection2
+          from: 'govardhan',
           localField: 'name',
           foreignField: 'name',
           as: 'joinedData'
         }
       },
       {
-        $project: { joinedData: 0 } // exclude the joinedData field from the result
+        $lookup: { // add this stage
+          from: 'other_places',
+          localField: 'name',
+          foreignField: 'name',
+          as: 'joinedData'
+        }
+      },
+      {
+        $project: { joinedData: 0 } 
       }
     ];
+
     const data = await collection1.aggregate(pipeline).toArray();
     res.json(data);
 
